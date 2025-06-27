@@ -4,28 +4,23 @@ from datetime import datetime, timedelta
 import streamlit as st
 from streamlit_folium import st_folium
 import folium
-from folium.plugins import TimestampedGeoJson
 import requests
 
-GRAPH_URL = "http://localhost:8989/route"
+# Public OSRM server for distance calculation
+GRAPH_URL = "http://router.project-osrm.org/route/v1/driving"
 
 # Função para calcular distância da rota (com fallback snap)
 def route_distance(lat1, lon1, lat2, lon2):
+    """Return driving distance in km using OSRM public API."""
     for delta in [0, 0.05, -0.05, 0.1, -0.1]:
         try:
-            p1 = f"{lat1},{lon1}"
-            p2 = f"{lat2+delta},{lon2+delta}"
-            resp = requests.get(GRAPH_URL, params={
-                "point": [p1, p2],
-                "profile": "car",
-                "locale": "en",
-                "calc_points": "false"
-            }, timeout=10)
+            url = f"{GRAPH_URL}/{lon1},{lat1};{lon2+delta},{lat2+delta}?overview=false"
+            resp = requests.get(url, timeout=10)
             if resp.status_code == 200:
                 data = resp.json()
-                if "paths" in data and data["paths"]:
-                    return data["paths"][0]["distance"] / 1000  # em km
-        except:
+                if "routes" in data and data["routes"]:
+                    return data["routes"][0]["distance"] / 1000
+        except Exception:
             pass
     return None
 
@@ -164,18 +159,38 @@ with st.sidebar:
     st.markdown("- `CM.csv` (CM, LAT, LON ...)")
     st.markdown("- `Site.csv` (SITE, LAT, LON, CM ...)")
 
+    tickets_file = st.file_uploader("Tickets.csv", type="csv")
+    fme_file = st.file_uploader("FME.csv", type="csv")
+    cm_file = st.file_uploader("CM.csv", type="csv")
+    site_file = st.file_uploader("Site.csv", type="csv")
+    st.caption("Se nenhum arquivo for enviado, serão usados os padrões do repositório.")
+
 start_dt = datetime.fromisoformat(start_str)
 end_dt = datetime.fromisoformat(end_str)
 
-# Lê arquivos
-tickets = pd.read_csv("Tickets.csv", encoding="latin1")
+# Lê arquivos enviados ou padrão
+if tickets_file is not None:
+    tickets = pd.read_csv(tickets_file, encoding="latin1")
+else:
+    tickets = pd.read_csv("Tickets.csv", encoding="latin1")
 tickets["DATA/TIME"] = pd.to_datetime(tickets["DATA/TIME"])
 tickets["SITE"] = tickets["SITE"].astype(str).str.strip().str.upper()
 tickets = tickets[(tickets["DATA/TIME"] >= start_dt) & (tickets["DATA/TIME"] <= end_dt)].head(max_tickets)
 
-techs = pd.read_csv("FME.csv", encoding="latin1")
-cms = pd.read_csv("CM.csv", encoding="latin1")
-sites = pd.read_csv("Site.csv", encoding="latin1")
+if fme_file is not None:
+    techs = pd.read_csv(fme_file, encoding="latin1")
+else:
+    techs = pd.read_csv("FME.csv", encoding="latin1")
+
+if cm_file is not None:
+    cms = pd.read_csv(cm_file, encoding="latin1")
+else:
+    cms = pd.read_csv("CM.csv", encoding="latin1")
+
+if site_file is not None:
+    sites = pd.read_csv(site_file, encoding="latin1")
+else:
+    sites = pd.read_csv("Site.csv", encoding="latin1")
 sites["SITE"] = sites["SITE"].astype(str).str.strip().str.upper()
 sites["CM"] = sites["CM"].astype(str).str.strip().str.upper()
 cms["CM"] = cms["CM"].astype(str).str.strip().str.upper()
