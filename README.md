@@ -8,12 +8,15 @@ Esta aplicação utiliza Streamlit para simular o deslocamento de técnicos de c
    ```bash
    pip install -r requirements.txt
    ```
-2. Rode o aplicativo:
+2. Rode o aplicativo a partir do diretório do projeto (ou forneça o caminho
+   completo do arquivo):
    ```bash
    streamlit run tim_field_sim.py
    ```
 
 Caso nenhum arquivo CSV seja carregado pela interface, serão utilizados os arquivos presentes no repositório (`Tickets.csv`, `FME.csv`, `CM.csv`, `Site.csv`).
+Esses arquivos são buscados automaticamente no mesmo diretório do script,
+permitindo executar o comando de qualquer pasta.
 
 ## Implantação no Streamlit Cloud
 
