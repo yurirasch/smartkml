@@ -5,9 +5,13 @@ import streamlit as st
 from streamlit_folium import st_folium
 import folium
 import requests
+from pathlib import Path
 
 # Public OSRM server for distance calculation
 GRAPH_URL = "http://router.project-osrm.org/route/v1/driving"
+
+# Base directory where default CSV files live
+BASE_DIR = Path(__file__).resolve().parent
 
 # Função para calcular distância da rota (com fallback snap)
 def route_distance(lat1, lon1, lat2, lon2):
@@ -172,7 +176,7 @@ end_dt = datetime.fromisoformat(end_str)
 if tickets_file is not None:
     tickets = pd.read_csv(tickets_file, encoding="latin1")
 else:
-    tickets = pd.read_csv("Tickets.csv", encoding="latin1")
+    tickets = pd.read_csv(BASE_DIR / "Tickets.csv", encoding="latin1")
 tickets["DATA/TIME"] = pd.to_datetime(tickets["DATA/TIME"])
 tickets["SITE"] = tickets["SITE"].astype(str).str.strip().str.upper()
 tickets = tickets[(tickets["DATA/TIME"] >= start_dt) & (tickets["DATA/TIME"] <= end_dt)].head(max_tickets)
@@ -180,17 +184,17 @@ tickets = tickets[(tickets["DATA/TIME"] >= start_dt) & (tickets["DATA/TIME"] <= 
 if fme_file is not None:
     techs = pd.read_csv(fme_file, encoding="latin1")
 else:
-    techs = pd.read_csv("FME.csv", encoding="latin1")
+    techs = pd.read_csv(BASE_DIR / "FME.csv", encoding="latin1")
 
 if cm_file is not None:
     cms = pd.read_csv(cm_file, encoding="latin1")
 else:
-    cms = pd.read_csv("CM.csv", encoding="latin1")
+    cms = pd.read_csv(BASE_DIR / "CM.csv", encoding="latin1")
 
 if site_file is not None:
     sites = pd.read_csv(site_file, encoding="latin1")
 else:
-    sites = pd.read_csv("Site.csv", encoding="latin1")
+    sites = pd.read_csv(BASE_DIR / "Site.csv", encoding="latin1")
 sites["SITE"] = sites["SITE"].astype(str).str.strip().str.upper()
 sites["CM"] = sites["CM"].astype(str).str.strip().str.upper()
 cms["CM"] = cms["CM"].astype(str).str.strip().str.upper()
